@@ -18,4 +18,4 @@ Guidelines for contributions to the project.
 **Order of branches:**
 `main` <- `develop` <- `frontend` | `backend` <- `feat/add-new-feature` | `fix/fix-bug` | `chore/update-dependencies` 
 
-eg: `git checkout -b scope/<scope-info`
+eg: `git checkout -b scope/scope-info`
