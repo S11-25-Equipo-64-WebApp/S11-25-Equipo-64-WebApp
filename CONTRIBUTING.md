@@ -23,7 +23,7 @@ eg: `git checkout -b scope/scope-info`
 ## FRONTEND & STYLES
 
 - Use Tailwind CSS V4 with utility classes.
-- Use Shadcn UI for components.
+- Use Shadcn UI for components
 - Priorize `globals.css` over local styles, this allows for mantainability.
 
 This ensures a consistent and maintainable codebase with light/dark mode support (next-theme).
@@ -39,3 +39,5 @@ This ensures a consistent and maintainable codebase with light/dark mode support
 - use shadcn's official commands, eg `bunx --bun shadcn@latest add button`
 - use existing components may be used as reference to make new ones.
 - Avoid using other component libraries, if in doubt ask the team.
+
+You may use the components route to see the components in action. `http://localhost:3000/components` (only visible in development mode) [components page](./src/pages/components.tsx)
