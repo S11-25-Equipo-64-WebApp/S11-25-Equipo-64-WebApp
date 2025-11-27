@@ -11,7 +11,7 @@ yarn dev
 # or
 pnpm dev
 # or
-bun dev
+bun dev # Better
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -34,3 +34,21 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Environments
+
+This project comes with 3 pre-configured environments:
+
+- `development` - for local development
+- `staging` - for testing and QA
+- `production` - for live users
+
+The environment can be set using the `NODE_ENV` variable. By default it must be set to `development` when running locally.
+
+You can see:
+
+- `.env.development`
+- `.env.staging`
+- `.env.production`
+
+as needed.
