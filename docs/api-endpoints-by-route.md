@@ -16,9 +16,6 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 **Endpoints:**
 
-- 🔵 `POST /auth/signup` - Crear cuentas de prueba (opcional)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/auth/signup`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/auth/signup`
 - 🔵 `POST /auth/login` (Supabase Auth) - Iniciar sesión
   - **URL Completa:** `https://{projectId}.supabase.co/auth/v1/token?grant_type=password`
   - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/auth/v1/token?grant_type=password`
