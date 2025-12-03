@@ -7,23 +7,31 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-## 🔐 Autenticación
+## 📣 Marketing & Publico
 
-### `/login`
+### `/`
 
-**Página:** `src/app/(auth)/login/page.tsx`  
-**Componente:** `AuthLoginPage`
+**Página:** `src/app/(marketing)/page.tsx`  
+**Componente:** `MarketingLandingPage`
 
 **Endpoints:**
 
-- 🔵 `POST /auth/login` (Supabase Auth) - Iniciar sesión
-  - **URL Completa:** `https://{projectId}.supabase.co/auth/v1/token?grant_type=password`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/auth/v1/token?grant_type=password`
-- 🟢 `GET /auth/user` - Obtener datos del usuario (desde AuthContext)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/auth/user`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/auth/user`
+- ⚪ Ninguno (página estática)
 
 ---
+
+### `/about`
+
+**Página:** `src/app/(marketing)/about/page.tsx`  
+**Componente:** `AboutMissionPage`
+
+**Endpoints:**
+
+- ⚪ Ninguno (página estática)
+
+---
+
+## 🔐 Autenticación
 
 ### `/signup`
 
@@ -36,6 +44,22 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
   - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/auth/signup`
   - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/auth/signup`
 - 🔵 `POST /auth/login` (Supabase Auth) - Auto-login después del registro
+  - **URL Completa:** `https://{projectId}.supabase.co/auth/v1/token?grant_type=password`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/auth/v1/token?grant_type=password`
+- 🟢 `GET /auth/user` - Obtener datos del usuario (desde AuthContext)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/auth/user`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/auth/user`
+
+---
+
+### `/login`
+
+**Página:** `src/app/(auth)/login/page.tsx`  
+**Componente:** `AuthLoginPage`
+
+**Endpoints:**
+
+- 🔵 `POST /auth/login` (Supabase Auth) - Iniciar sesión
   - **URL Completa:** `https://{projectId}.supabase.co/auth/v1/token?grant_type=password`
   - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/auth/v1/token?grant_type=password`
 - 🟢 `GET /auth/user` - Obtener datos del usuario (desde AuthContext)
@@ -67,6 +91,9 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 - 🟢 `GET /projects` - Listar proyectos del usuario
   - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects`
   - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects`
+- 🔴 `DELETE /projects/{projectId}` - Eliminar proyecto
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
 
 ---
 
@@ -83,19 +110,32 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-### `/dashboard/projects/[projectId]`
+### `/dashboard/help`
 
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/page.tsx`
+**Página:** `src/app/(dashboard)/dashboard/help/page.tsx`  
+**Componente:** `DashboardHelpPage`
 
 **Endpoints:**
 
-- ⚪ Ninguno (redirige a `/dashboard/projects/[projectId]/testimonials`)
+- ⚪ Ninguno (página estática para ayuda y sugerencias, funcionalidad de envío no implementada)
 
 ---
 
-### `/dashboard/projects/[projectId]/testimonials`
+## 🧙 Gestión de Proyectos
 
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/testimonials/page.tsx`  
+### `/dashboard/projects/:projectId`
+
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/page.tsx`
+
+**Endpoints:**
+
+- ⚪ Ninguno (redirige a `/dashboard/projects/:projectId/testimonials`)
+
+---
+
+### `/dashboard/projects/:projectId/testimonials`
+
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/testimonials/page.tsx`  
 **Componente:** `ProjectTestimonialsPage`
 
 **Endpoints:**
@@ -115,9 +155,9 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-### `/dashboard/projects/[projectId]/testimonials/[testimonialId]`
+### `/dashboard/projects/:projectId/testimonials/:testimonialId`
 
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/testimonials/[testimonialId]/page.tsx`  
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/testimonials/:testimonialId/page.tsx`  
 **Componente:** `TestimonialEditPage`
 
 **Endpoints:**
@@ -140,113 +180,9 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-### `/dashboard/projects/[projectId]/capture-forms`
+### `/dashboard/projects/:projectId/import-testimonials`
 
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/capture-forms/page.tsx`  
-**Componente:** `ProjectCaptureFormsListPage`
-
-**Endpoints:**
-
-- 🟢 `GET /projects/{projectId}/capture-forms` - Listar formularios de captura
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms`
-- 🔴 `DELETE /projects/{projectId}/capture-forms/{formId}` - Eliminar formulario
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms/{formId}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms/form_ejemplo123`
-- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
-
----
-
-### `/dashboard/projects/[projectId]/capture-forms/new`
-
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/capture-forms/new/page.tsx`  
-**Componente:** `CaptureFormNewPage`
-
-**Endpoints:**
-
-- 🔵 `POST /projects/{projectId}/capture-forms` - Crear nuevo formulario de captura
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms`
-- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
-
----
-
-### `/dashboard/projects/[projectId]/capture-forms/[formId]/edit`
-
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/capture-forms/[formId]/edit/page.tsx`  
-**Componente:** `ProjectCaptureFormEditPage`
-
-**Endpoints:**
-
-- 🔵 `POST /projects/{projectId}/capture-forms` - Crear formulario (si es nuevo)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms`
-- 🟠 `PUT /projects/{projectId}/capture-forms/{formId}` - Actualizar formulario existente
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms/{formId}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms/form_ejemplo123`
-- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
-
----
-
-### `/dashboard/projects/[projectId]/editors`
-
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/editors/page.tsx`  
-**Componente:** `ProjectEditorsManagementPage`
-
-**Endpoints:**
-
-- 🟢 `GET /projects/{projectId}/editors` - Listar editores del proyecto
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/editors`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/editors`
-- 🔵 `POST /projects/{projectId}/editors` - Agregar editor al proyecto
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/editors`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/editors`
-- 🔴 `DELETE /projects/{projectId}/editors/{editorId}` - Eliminar editor del proyecto
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/editors/{editorId}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/editors/editor_ejemplo123`
-- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
-
----
-
-### `/dashboard/projects/[projectId]/api`
-
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/api/page.tsx`  
-**Componente:** `ProjectAPIPage`
-
-**Endpoints:**
-
-- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
-- ⚪ Ningún otro endpoint (página informativa que muestra ejemplos de código)
-
----
-
-### `/dashboard/projects/[projectId]/embeds`
-
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/embeds/page.tsx`  
-**Componente:** `ProjectEmbedsListPage`
-
-**Endpoints:**
-
-- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
-  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
-  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
-- ⚪ Ningún otro endpoint (página informativa que genera código de embed)
-
----
-
-### `/dashboard/projects/[projectId]/import-testimonials`
-
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/import-testimonials/page.tsx`  
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/import-testimonials/page.tsx`  
 **Componente:** `ProjectImportSourcePage`
 
 **Endpoints:**
@@ -258,9 +194,9 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-### `/dashboard/projects/[projectId]/import-testimonials/text`
+### `/dashboard/projects/:projectId/import-testimonials/text`
 
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/import-testimonials/text/page.tsx`  
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/import-testimonials/text/page.tsx`  
 **Componente:** `ProjectImportFromTextPage`
 
 **Endpoints:**
@@ -277,9 +213,9 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-### `/dashboard/projects/[projectId]/import-testimonials/image`
+### `/dashboard/projects/:projectId/import-testimonials/image`
 
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/import-testimonials/image/page.tsx`  
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/import-testimonials/image/page.tsx`  
 **Componente:** `ProjectImportFromImagePage`
 
 **Endpoints:**
@@ -299,9 +235,9 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-### `/dashboard/projects/[projectId]/import-testimonials/video`
+### `/dashboard/projects/:projectId/import-testimonials/video`
 
-**Página:** `src/app/(dashboard)/dashboard/projects/[projectId]/import-testimonials/video/page.tsx`  
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/import-testimonials/video/page.tsx`  
 **Componente:** `ProjectImportFromVideoPage`
 
 **Endpoints:**
@@ -318,11 +254,118 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-## 📝 Formularios Públicos
+### `/dashboard/projects/:projectId/capture-forms`
 
-### `/cf/[formId]`
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/capture-forms/page.tsx`  
+**Componente:** `ProjectCaptureFormsListPage`
 
-**Página:** `src/app/(public-forms)/cf/[formId]/page.tsx`  
+**Endpoints:**
+
+- 🟢 `GET /projects/{projectId}/capture-forms` - Listar formularios de captura
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms`
+- 🔴 `DELETE /projects/{projectId}/capture-forms/{formId}` - Eliminar formulario
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms/{formId}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms/form_ejemplo123`
+- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
+
+---
+
+### `/dashboard/projects/:projectId/capture-forms/new`
+
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/capture-forms/new/page.tsx`  
+**Componente:** `CaptureFormNewPage`
+
+**Endpoints:**
+
+- 🔵 `POST /projects/{projectId}/capture-forms` - Crear nuevo formulario de captura
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms`
+- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
+
+---
+
+### `/dashboard/projects/:projectId/capture-forms/:formId/edit`
+
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/capture-forms/:formId/edit/page.tsx`  
+**Componente:** `ProjectCaptureFormEditPage`
+
+**Endpoints:**
+
+- 🟢 `GET /projects/{projectId}/capture-forms/{formId}` - Obtener formulario específico (no implementado en el código actual, usa valores por defecto)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms/{formId}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms/form_ejemplo123`
+- 🔵 `POST /projects/{projectId}/capture-forms` - Crear formulario (si es nuevo)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms`
+- 🟠 `PUT /projects/{projectId}/capture-forms/{formId}` - Actualizar formulario existente
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/capture-forms/{formId}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/capture-forms/form_ejemplo123`
+- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
+
+---
+
+### `/dashboard/projects/:projectId/embeds`
+
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/embeds/page.tsx`  
+**Componente:** `ProjectEmbedsListPage`
+
+**Endpoints:**
+
+- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
+- ⚪ Ningún otro endpoint (página informativa que genera código de embed)
+
+---
+
+### `/dashboard/projects/:projectId/api`
+
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/api/page.tsx`  
+**Componente:** `ProjectAPIPage`
+
+**Endpoints:**
+
+- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
+- ⚪ Ningún otro endpoint (página informativa que muestra ejemplos de código)
+
+---
+
+### `/dashboard/projects/:projectId/editors`
+
+**Página:** `src/app/(dashboard)/dashboard/projects/:projectId/editors/page.tsx`  
+**Componente:** `ProjectEditorsManagementPage`
+
+**Endpoints:**
+
+- 🟢 `GET /projects/{projectId}/editors` - Listar editores del proyecto
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/editors`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/editors`
+- 🔵 `POST /projects/{projectId}/editors` - Agregar editor al proyecto
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/editors`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/editors`
+- 🔴 `DELETE /projects/{projectId}/editors/{editorId}` - Eliminar editor del proyecto
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}/editors/{editorId}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123/editors/editor_ejemplo123`
+- 🟢 `GET /projects/{projectId}` - Obtener datos del proyecto (desde useProject hook)
+  - **URL Completa:** `{SUPABASE_EDGE_FUNCTION_URL}/projects/{projectId_path}`
+  - **Ejemplo:** `https://ejemplo-proyecto-id.supabase.co/functions/v1/ejemplo-edge-function/projects/proj_ejemplo123`
+
+---
+
+## 📝 Formularios & Embeds Públicos
+
+### `/cf/:formId`
+
+**Página:** `src/app/(public-forms)/cf/:formId/page.tsx`  
 **Componente:** `PublicCaptureFormPage`
 
 **Endpoints:**
@@ -339,8 +382,6 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 
 ---
 
-## 📺 Embeds Públicos
-
 ### `/embed`
 
 **Página:** `src/app/(marketing)/embed/page.tsx`  
@@ -351,30 +392,6 @@ Este documento lista todas las rutas de la aplicación, las páginas correspondi
 - 🟢 `GET /public/projects/{projectId}/testimonials` - Obtener testimonios aprobados para mostrar en el embed
   - **URL Completa:** `https://ejemplo-dominio.com/api/projects/{projectId_path}/testimonials`
   - **Ejemplo:** `https://ejemplo-dominio.com/api/projects/proj_ejemplo123/testimonials?status=approved&limit=20`
-
----
-
-## 📣 Marketing
-
-### `/`
-
-**Página:** `src/app/(marketing)/page.tsx`  
-**Componente:** `MarketingLandingPage`
-
-**Endpoints:**
-
-- ⚪ Ninguno (página estática)
-
----
-
-### `/about`
-
-**Página:** `src/app/(marketing)/about/page.tsx`  
-**Componente:** `AboutMissionPage`
-
-**Endpoints:**
-
-- ⚪ Ninguno (página estática)
 
 ---
 
