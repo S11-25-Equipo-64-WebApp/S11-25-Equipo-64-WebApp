@@ -1,4 +1,3 @@
-// src/lib/cloudinary.ts
 import { v2 as cloudinary } from "cloudinary";
 
 const configured = (() => {
