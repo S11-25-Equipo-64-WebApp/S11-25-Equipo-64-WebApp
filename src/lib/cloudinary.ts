@@ -20,11 +20,25 @@ export function isCloudinaryConfigured() {
   return Boolean(cData.cloud_name && cData.api_key && cData.api_secret);
 }
 
-cloudinary.config({
-  cloud_name: cData.cloud_name,
-  api_key: cData.api_key,
-  api_secret: cData.api_secret,
-  secure: true,
-});
+if (isCloudinaryConfigured()) {
+  cloudinary.config({
+    cloud_name: cData.cloud_name,
+    api_key: cData.api_key,
+    api_secret: cData.api_secret,
+    secure: true,
+  });
+} else {
+  logger.warn(
+    "Cloudinary credentials are missing. Media endpoints will not work until they are set."
+  );
+}
+
+export type CloudinaryDestroyResult = Awaited<
+  ReturnType<typeof cloudinary.uploader.destroy>
+>;
+
+export async function deleteMediaAsset(publicId: string) {
+  return cloudinary.uploader.destroy(publicId, { invalidate: true });
+}
 
 export { cloudinary };

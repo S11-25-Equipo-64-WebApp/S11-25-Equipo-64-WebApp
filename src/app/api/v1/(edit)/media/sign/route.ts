@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { responseSchema } from "@/schemas/server/response";
 import { uploadFolder, isCloudinaryConfigured } from "@/lib/cloudinary";
 
-let configured = isCloudinaryConfigured;
+export async function POST(_request: NextRequest) {
+  const configured = isCloudinaryConfigured();
 
-export async function POST(request: NextRequest) {
   if (!configured) {
     const msg = "Cloudinary is not properly setup";
     logger.error(msg);
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   const signature = cloudinary.utils.api_sign_request(
     paramsToSign,
-    cData.api_key
+    cData.api_secret
   );
 
   return NextResponse.json(
