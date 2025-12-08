@@ -1,21 +1,16 @@
 import { cloudinary, cData } from "@/lib/cloudinary";
-import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
-// import { responseSchema } from "@/schemas/server/response";
-import { uploadFolder, isCloudinaryConfigured } from "@/lib/cloudinary";
-import { responseSchema, serverResponse } from "@/schemas/server/response";
+import { uploadFolder} from "@/lib/cloudinary";
+import { serverResponse } from "@/schemas/server/response";
+import { handleCloudinary } from "@/app/api/helpers/cloudinary";
 
 export async function POST(_request: NextRequest) {
-  if (!isCloudinaryConfigured(cData)) {
-    const response: serverResponse = {
-      status: 500,
-      message: "Cloudinary is not properly setup",
-      data: null,
-    };
-    logger.error({ response });
 
-    return NextResponse.json(response, { status: response.status });
-  }
+  // case: clodinary is not configured
+    const cloudinaryResponse = handleCloudinary();
+    if (cloudinaryResponse) {
+      return cloudinaryResponse;
+    }
 
   const timestamp = Math.floor(Date.now() / 1000);
   const paramsToSign = {
