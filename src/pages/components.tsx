@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import "../app/globals.css";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 
