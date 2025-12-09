@@ -7,16 +7,17 @@ import pretty from "pino-pretty";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Crear carpeta si no existe
-
 const logDir = process.env.LOG_DIR ?? path.join(process.cwd(), "log");
-const logFile = path.join(logDir, "app.log");
+const resolvedLogDir = path.isAbsolute(logDir)
+  ? logDir
+  : path.join(process.cwd(), logDir);
+const logFile = path.join(resolvedLogDir, "app.log");
 
 // --- STREAMS ---
 const streams: pino.DestinationStream[] = [];
 
 if (isProduction) {
-  // wite to stdout
+  // write to stdout
   streams.push(pino.destination(1));
 } else {
   // pretty print (terminal)
@@ -28,6 +29,14 @@ if (isProduction) {
       // destination: logFile,
     })
   );
+
+  // ensure log folder exists before writing to file
+  try {
+    fs.mkdirSync(resolvedLogDir, { recursive: true });
+  } catch (error) {
+    console.error("Failed to create log directory", { resolvedLogDir, error });
+  }
+
   // write to file
   streams.push(pino.destination(logFile));
 }
