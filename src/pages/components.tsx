@@ -1,21 +1,18 @@
 import { notFound } from "next/navigation";
-export const dynamic = "force-dynamic";
-
-import "../app/globals.css";
-
 import { Button } from "@/components/ui/button";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import "../app/globals.css";
 
-export async function getServerSideProps() {
-  if (process.env.NODE_ENV !== "development") {
-    return { notFound: true };
-  }
-  return { props: {} };
-}
+export const dynamic = "force-dynamic";
 
-// components demo page
 export default function ComponentsDemoPage() {
+  // 1. server side rendering lives here
+  if (process.env.NODE_ENV !== "development") {
+    notFound();
+  }
+
+  // 2. Rendering
   return (
     <ThemeProvider
       attribute="class"
@@ -23,16 +20,16 @@ export default function ComponentsDemoPage() {
       enableSystem
       disableTransitionOnChange
     >
-      <div className="flex flex-col items-center">
-        {/* button */}
-        <div className="flex flex-col items-center justify-center">
-          <h1>Button</h1>
+      <div className="flex flex-col items-center gap-8 p-10">
+        {/* Button Section */}
+        <div className="flex flex-col items-center justify-center gap-2">
+          <h1 className="text-xl font-bold">Button</h1>
           <Button>Click me</Button>
         </div>
 
-        {/* mode toggle */}
-        <div>
-          <h1>Mode Toggle</h1>
+        {/* Mode Toggle Section */}
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-xl font-bold">Mode Toggle</h1>
           <ModeToggle />
         </div>
       </div>
