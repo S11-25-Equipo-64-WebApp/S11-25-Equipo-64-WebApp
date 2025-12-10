@@ -4,7 +4,6 @@ import fs from "fs";
 import path from "path";
 import pino from "pino";
 import pretty from "pino-pretty";
-
 const isProduction = process.env.NODE_ENV === "production";
 
 const logDir = process.env.LOG_DIR ?? path.join(process.cwd(), "log");
