@@ -18,6 +18,8 @@ tags:
     description: Firma y gestion de media en Cloudinary
   - name: Health
     description: Endpoints de salud (solo dev)
+  - name: Auth
+    description: Validacion de API keys (opcional)
 security: []
 components:
   securitySchemes:
@@ -26,13 +28,6 @@ components:
       in: header
       name: x-api-key
   parameters:
-    OrgParam:
-      name: org
-      in: path
-      required: true
-      schema:
-        type: string
-      description: Identificador de organizacion (MVP usa organizacion global)
     SlugParam:
       name: slug
       in: path
@@ -87,6 +82,29 @@ components:
         data:
           type: object
           nullable: true
+        code:
+          type: string
+          description: Codigo de error de negocio (opcional)
+        issues:
+          type: array
+          description: Lista de errores de validacion (p.ej. salida de zod)
+          items:
+            type: object
+            properties:
+              path:
+                type: array
+                items: { type: string }
+              message:
+                type: string
+              code:
+                type: string
+    ConcurrencyHeaders:
+      type: object
+      properties:
+        ETag:
+          type: string
+          description: Version del recurso para control de concurrencia
+      additionalProperties: false
     EntryStatus:
       type: string
       enum: [draft, published]
@@ -97,6 +115,11 @@ components:
         10=CLOUDINARY_IMAGE, 11=CLOUDINARY_VIDEO, 20=YOUTUBE_VIDEO).
       enum: [0, 10, 11, 20]
       examples: [20]
+      x-enum-descriptions:
+        "0": NONE (texto o sin media)
+        "10": CLOUDINARY_IMAGE
+        "11": CLOUDINARY_VIDEO
+        "20": YOUTUBE_VIDEO
     MediaAsset:
       type: object
       properties:
@@ -157,7 +180,11 @@ components:
         slug:
           type: string
           description: Slug unico derivado del titulo
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
         updatedAt:
+          type: string
+          format: date-time
+        createdAt:
           type: string
           format: date-time
       required:
@@ -167,6 +194,9 @@ components:
         - date
         - author
         - status
+        - slug
+        - createdAt
+        - updatedAt
     MediaSignature:
       type: object
       properties:
@@ -197,8 +227,10 @@ components:
       properties:
         title:
           type: string
+          maxLength: 200
         content:
           type: string
+          maxLength: 5000
         mediaUrl:
           type: string
           format: uri
@@ -206,19 +238,27 @@ components:
           $ref: '#/components/schemas/MediaSource'
         summary:
           type: string
+          maxLength: 280
         date:
           type: string
           format: date-time
+          description: Fecha de publicacion prevista o de captura
         tags:
           type: array
           items:
             type: string
+            maxLength: 50
+          uniqueItems: true
+          maxItems: 10
         author:
           type: string
+          maxLength: 120
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          description: Slug opcional; si no se envia se genera a partir del titulo
       required:
         - title
-        - mediaSource
-        - date
         - author
     UserProfile:
       type: object
@@ -263,6 +303,8 @@ components:
             type: string
         author:
           type: string
+        status:
+          $ref: '#/components/schemas/EntryStatus'
     ApproveEntryInput:
       type: object
       properties:
@@ -273,20 +315,82 @@ components:
         - approve
 
 paths:
-  /api/v1/{org}/entries:
+  /api/v1/auth/validate:
+    post:
+      tags: [Auth]
+      summary: Valida API key y devuelve perfil/rol.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Perfil valido
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: Error inesperado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/v1/entries:
     get:
       tags: [Entries]
-      summary: Lista entries. Publico ve solo published; con API key se pueden incluir drafts segun rol.
+      summary: Lista entries. Publico ve solo published; drafts solo con API key de editor/admin.
       parameters:
-        - $ref: '#/components/parameters/OrgParam'
         - name: includeDrafts
           in: query
           required: false
           schema:
             type: boolean
             default: false
-          description: Solo para editor/admin; ignora drafts si falta o es false.
-      security: []  # publico permitido
+          description: Solo para editor/admin; requiere API key. Sin key devuelve solo published.
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [published, draft]
+          description: Filtra por estado; draft requiere API key con rol.
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtra por tag exacto.
+        - name: author
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtra por autor.
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+          description: Orden por fecha.
+      security:
+        - {}
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Lista de entries
+          headers:
+            Cache-Control:
+              description: Puede incluir directivas de cache para SSG/ISR
+              schema: { type: string }
       responses:
         '200':
           description: Lista de entries
@@ -301,12 +405,16 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/Entry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           description: Error inesperado
           content:
@@ -315,8 +423,6 @@ paths:
     post:
       tags: [Entries]
       summary: Crea entry (editor/admin). Siempre queda en draft y con slug unico.
-      parameters:
-        - $ref: '#/components/parameters/OrgParam'
       security:
         - ApiKeyAuth: []
       requestBody:
@@ -351,14 +457,15 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
-  /api/v1/{org}/entries/{slug}:
+  /api/v1/entries/{slug}:
     get:
       tags: [Entries]
-      summary: Obtiene entry por slug. Publico ve solo published; drafts requieren rol valido.
+      summary: Obtiene entry por slug. Publico ve solo published; drafts requieren API key de editor/admin.
       parameters:
-        - $ref: '#/components/parameters/OrgParam'
         - $ref: '#/components/parameters/SlugParam'
-      security: []
+      security:
+        - {}
+        - ApiKeyAuth: []
       responses:
         '200':
           description: Entry encontrado
@@ -373,6 +480,10 @@ paths:
                         $ref: '#/components/schemas/Entry'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           description: Error inesperado
           content:
@@ -420,12 +531,11 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
-  /api/v1/{org}/entries/{slug}/approve:
+  /api/v1/entries/{slug}/approve:
     post:
       tags: [Entries]
       summary: Cambia estado de entry (solo admin). approve=true publica; false revierte a draft.
       parameters:
-        - $ref: '#/components/parameters/OrgParam'
         - $ref: '#/components/parameters/SlugParam'
       security:
         - ApiKeyAuth: []
@@ -497,7 +607,8 @@ paths:
       summary: Devuelve firma y timestamp para subida a Cloudinary (usa folder por defecto).
       description: |
         No requiere body. Responde 500 si Cloudinary no esta configurado.
-      security: []  # actualmente sin auth
+      security:
+        - ApiKeyAuth: []
       responses:
         '200':
           description: Firma generada
@@ -510,6 +621,10 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/MediaSignature'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           description: Cloudinary no configurado o error
           content:
@@ -522,7 +637,8 @@ paths:
       summary: Elimina un asset de Cloudinary por public_id.
       description: |
         Valida body con zod. Devuelve 404 si el asset no existe.
-      security: []  # actualmente sin auth
+      security:
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -545,6 +661,10 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           description: Error interno
           content:
