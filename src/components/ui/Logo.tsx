@@ -39,7 +39,7 @@ export function Logo({
     >
       <span
         className={cn(
-          "flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg shadow-primary/25 transition-transform group-hover:scale-105 group-active:scale-95",
+          "flex items-center justify-center rounded-xl bg-linear-to-br from-primary to-secondary text-primary-foreground shadow-lg shadow-primary/25 transition-transform group-hover:scale-105 group-active:scale-95",
           sizeTokens.wrapper
         )}
       >
