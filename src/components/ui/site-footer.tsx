@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 
-import { Logo } from "@/components/ui/Logo";
+import { Logo } from "@/components/branding/Logo";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 const footerNav = [
   {
@@ -71,7 +73,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="flex flex-col gap-3 border-t border-neutral-800 pt-6 text-sm text-neutral-400 md:flex-row md:items-center md:justify-between">
-          <p>© {currentYear} Testimonial CMS · Equipo 64</p>
+          <p>© {currentYear} Testimonial CMS · Equipo 64 · Hecho con amor por Davis, Rel, Noemi y Jako</p>
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white">
               Listo para producción

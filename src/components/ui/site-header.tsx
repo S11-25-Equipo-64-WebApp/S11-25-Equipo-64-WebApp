@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 
+import { Logo } from "@/components/branding/Logo";
 import { Button } from "@/components/ui/Button";
-import { Logo } from "@/components/ui/Logo";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 
 const navigation = [
