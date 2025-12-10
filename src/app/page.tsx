@@ -17,7 +17,10 @@ const stats = [
 export default function Home() {
   return (
     <div className="flex flex-col gap-16">
-      <HeroGlow className="rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-secondary/10 to-background shadow-xl dark:bg-gradient-to-br dark:from-primary/20 dark:via-secondary/10 dark:to-background">
+      <HeroGlow
+        className="rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-secondary/10 to-background shadow-xl dark:bg-gradient-to-br dark:from-primary/20 dark:via-secondary/10 dark:to-background"
+        hoverGlow
+      >
         <div className="absolute inset-0 opacity-70">
           <div className="absolute -left-24 top-12 h-48 w-48 rounded-full bg-primary/25 blur-3xl dark:bg-primary/30" />
           <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-secondary/20 blur-3xl dark:bg-secondary/25" />

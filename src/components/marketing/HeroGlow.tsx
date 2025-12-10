@@ -10,6 +10,7 @@ type HeroGlowProps = {
   glowColor?: string;
   glowOpacity?: number;
   radius?: number;
+  hoverGlow?: boolean;
 };
 
 export function HeroGlow({
@@ -18,6 +19,7 @@ export function HeroGlow({
   glowColor = "var(--color-primary)",
   glowOpacity = 0.35,
   radius = 900,
+  hoverGlow,
 }: HeroGlowProps) {
   const ref = useRef<HTMLElement | null>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -31,11 +33,17 @@ export function HeroGlow({
     setPosition({ x, y });
   }
 
+  const containerClass = cn("relative overflow-hidden", hoverGlow && "group", className);
+  const overlayClasses = cn(
+    "pointer-events-none absolute inset-0 transition duration-300",
+    hoverGlow ? "opacity-0 group-hover:opacity-100" : "opacity-0 lg:opacity-100"
+  );
+
   return (
     <section
       ref={ref}
       onMouseMove={handleMouseMove}
-      className={cn("relative overflow-hidden", className)}
+      className={containerClass}
       style={
         {
           "--x": `${position.x}px`,
@@ -44,7 +52,7 @@ export function HeroGlow({
       }
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 lg:opacity-100"
+        className={overlayClasses}
         style={{
           background: `radial-gradient(${radius}px circle at var(--x) var(--y), color-mix(in oklch, ${glowColor} ${
             glowOpacity * 100
