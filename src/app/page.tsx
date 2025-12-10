@@ -81,47 +81,52 @@ export default function Home() {
 
       <FeaturesSection />
 
-      <section
-        id="cta"
-        className="overflow-hidden rounded-3xl border border-border bg-gradient-to-r from-primary/15 via-primary/10 to-secondary/15 p-8 shadow-lg sm:p-12"
+      <HeroGlow
+        className="rounded-3xl border border-border bg-gradient-to-r from-primary/15 via-primary/10 to-secondary/15 shadow-lg"
+        hoverGlow
       >
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-3">
-            <Badge
-              variant="outline"
-              className="w-fit border-primary/30 bg-primary/10 text-xs font-semibold uppercase tracking-wide text-primary"
-            >
-              Inspirado en rel, listo para tu equipo
-            </Badge>
-            <h3 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Embeds, roles y moderación en minutos.
-            </h3>
-            <p className="text-muted-foreground sm:max-w-2xl">
-              Diseño y colores inspirados en frontend-rel, montados sobre nuestros tokens de `globals.css`
-              y componentes shadcn para un MVP que puedes mostrar hoy.
-            </p>
+        <section
+          id="cta"
+          className="overflow-hidden rounded-3xl border border-transparent bg-transparent p-8 sm:p-12"
+        >
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-3">
+              <Badge
+                variant="outline"
+                className="w-fit border-primary/30 bg-primary/10 text-xs font-semibold uppercase tracking-wide text-primary"
+              >
+                Inspirado en rel, listo para tu equipo
+              </Badge>
+              <h3 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                Embeds, roles y moderación en minutos.
+              </h3>
+              <p className="text-muted-foreground sm:max-w-2xl">
+                Diseño y colores inspirados en frontend-rel, montados sobre nuestros tokens de `globals.css`
+                y componentes shadcn para un MVP que puedes mostrar hoy.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <GlowButton
+                asChild
+                size="lg"
+                glowColor="accent"
+                glowOpacity={0.45}
+                glowRadius={440}
+                accent="from-accent/40 via-primary/25 to-transparent"
+                className="bg-primary text-primary-foreground shadow-md shadow-primary/25 hover:bg-primary/90"
+              >
+                <Link href="/signup">
+                  Probar gratis
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </GlowButton>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/about">Ver misión</Link>
+              </Button>
+            </div>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <GlowButton
-              asChild
-              size="lg"
-              glowColor="accent"
-              glowOpacity={0.45}
-              glowRadius={440}
-              accent="from-accent/40 via-primary/25 to-transparent"
-              className="bg-primary text-primary-foreground shadow-md shadow-primary/25 hover:bg-primary/90"
-            >
-              <Link href="/signup">
-                Probar gratis
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </GlowButton>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/about">Ver misión</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+        </section>
+      </HeroGlow>
     </div>
   );
 }
