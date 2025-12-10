@@ -80,15 +80,13 @@ export default function Home() {
         >
           <div className="space-y-3">
             <HeroGlowBadge className="text-xs font-semibold uppercase tracking-wide">
-              Inspirado en rel, listo para tu equipo
+              Testimonios que convierten y fidelizan
             </HeroGlowBadge>
             <h3 className="bg-gradient-to-br from-foreground via-primary to-secondary bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl">
-              Embeds, roles y moderación en minutos.
+              Testimonios, roles y moderación en minutos.
             </h3>
             <p className="text-muted-foreground sm:max-w-2xl">
-              Diseño y colores inspirados en frontend-rel, montados sobre
-              nuestros tokens de `globals.css` y componentes shadcn para un MVP
-              que puedes mostrar hoy.
+              Testimonios que convierten y fidelizan, listos para tu equipo.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
