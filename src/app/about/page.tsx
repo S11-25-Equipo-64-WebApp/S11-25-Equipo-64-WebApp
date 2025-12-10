@@ -119,7 +119,7 @@ export default function AboutPage() {
             </p>
           </div>
         </div>
-        <div className="rounded-3xl border border-border bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 shadow-sm">
+        <div className="rounded-3xl border border-border bg-gradient-to-br from-secondary/10 via-primary/5 to-background shadow-md">
           <div className="space-y-4 px-6 py-8 sm:px-10">
             <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Equipo
