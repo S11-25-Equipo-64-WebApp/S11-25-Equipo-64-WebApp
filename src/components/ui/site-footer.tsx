@@ -27,7 +27,7 @@ export function SiteFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-slate-800 bg-gradient-to-b from-neutral-900 to-neutral-950 px-4 text-neutral-200">
+    <footer className="border-t border-slate-800 bg-linear-to-b from-neutral-900 to-neutral-950 px-4 text-neutral-200">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 py-10">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div className="space-y-4 md:max-w-xl">
