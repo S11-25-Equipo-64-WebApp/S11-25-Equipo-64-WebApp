@@ -106,7 +106,12 @@ export default function Home() {
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </GlowButton>
-            <Button asChild size="lg" variant="outline" className="border-border">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-border"
+            >
               <Link href="/about">Ver misión</Link>
             </Button>
           </div>
