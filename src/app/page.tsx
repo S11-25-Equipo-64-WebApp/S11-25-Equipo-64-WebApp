@@ -6,7 +6,6 @@ import { HeroGlowBadge } from "@/components/marketing/HeroGlowBadge";
 import { HeroStatsGrid } from "@/components/marketing/HeroStatsGrid";
 import { FeaturesSection } from "@/components/marketing/FeaturesSection";
 import { GlowButton } from "@/components/marketing/GlowButton";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {

@@ -119,4 +119,25 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  body.auth-layout {
+    @apply bg-background text-foreground;
+  }
+
+  body.auth-layout header,
+  body.auth-layout footer {
+    display: none;
+  }
+
+  body.auth-layout main {
+    @apply px-0 py-0;
+  }
+
+  body.auth-layout main > div {
+    @apply flex flex-col items-center justify-center gap-0 min-h-[100svh] w-full max-w-none;
+  }
+
+  body.auth-layout main > div > div {
+    @apply w-full;
+  }
 }
