@@ -80,14 +80,28 @@ export function FeatureCard({
       }
     >
       <div
+        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent} opacity-15`}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-sky-50/70 via-white/60 to-slate-50/60 blur-[1px] dark:from-slate-900/60 dark:via-slate-900/40 dark:to-slate-950/60"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -left-14 top-0 h-32 w-32 rounded-full blur-3xl opacity-50"
+        style={{ background: iconGradient.from }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute bottom-0 right-0 h-36 w-36 rounded-full blur-3xl opacity-45"
+        style={{ background: iconGradient.to }}
+        aria-hidden="true"
+      />
+      <div
         className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
         style={{
           background: `radial-gradient(${glowRadius}px circle at var(--x) var(--y), color-mix(in oklch, ${baseColor} ${glowOpacity * 100}%, transparent), transparent ${glowFalloff}%)`,
         }}
-        aria-hidden="true"
-      />
-      <div
-        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent} opacity-10`}
         aria-hidden="true"
       />
       <div className="relative space-y-3">
