@@ -26,7 +26,11 @@ export default function AboutPage() {
             TestimonialCMS pone tus testimonios en piloto automático
           </h1>
           <p className="text-lg text-muted-foreground sm:max-w-3xl">
-            Reunimos clientes, moderamos feedback y publicamos embeds accesibles desde un mismo panel. Admins definen permisos, editores ajustan textos y QA revisa versiones en segundos. Todo el diseño usa los tokens de `globals.css` para mantener cada captura fiel al resto del producto.
+            Reunimos clientes, moderamos feedback y publicamos embeds accesibles
+            desde un mismo panel. Admins definen permisos, editores ajustan
+            textos y QA revisa versiones en segundos. Todo el diseño usa los
+            tokens de `globals.css` para mantener cada captura fiel al resto del
+            producto.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <GlowButton
@@ -72,9 +76,16 @@ export default function AboutPage() {
               Roles, embeds y moderación listos para tu equipo
             </h3>
             <p className="text-muted-foreground sm:max-w-2xl">
-              Las páginas de marketing, los captadores en vivo y los canales de soporte ahora comparten el mismo editor: el contenido llega a embeds, landing pages y dashboards con las mismas reglas tipográficas. TestimonialCMS ofrece reportes, roles y moderación continua para que el storytelling sea veloz y confiable.
+              Las páginas de marketing, los captadores en vivo y los canales de
+              soporte ahora comparten el mismo editor: el contenido llega a
+              embeds, landing pages y dashboards con las mismas reglas
+              tipográficas. TestimonialCMS ofrece reportes, roles y moderación
+              continua para que el storytelling sea veloz y confiable.
             </p>
-            <Badge variant="outline" className="text-xs font-semibold uppercase tracking-wide">
+            <Badge
+              variant="outline"
+              className="text-xs font-semibold uppercase tracking-wide"
+            >
               Producto real · Marketing listo
             </Badge>
           </div>
@@ -112,10 +123,14 @@ export default function AboutPage() {
               Estrategia
             </p>
             <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Testimonios con ritmo frontend-rel
+              Testimonios que convierten y fidelizan
             </h2>
             <p className="text-muted-foreground sm:text-lg">
-              Exportamos la narrativa de marketing que funcionó con miles de historias reales y la aplicamos a contenido genuino. Los testimonios se publican con embeds accesibles, moderación automática y tonos que respetan a la marca sin sacrificar consistencia editorial.
+              Exportamos la narrativa de marketing que funcionó con miles de
+              historias reales y la aplicamos a contenido genuino. Los
+              testimonios se publican con embeds accesibles, moderación
+              automática y tonos que respetan a la marca sin sacrificar
+              consistencia editorial.
             </p>
           </div>
         </div>
@@ -128,9 +143,15 @@ export default function AboutPage() {
               Enfocados en velocidad y confianza
             </h2>
             <p className="text-muted-foreground sm:text-lg">
-              Somos un equipo que recoge feedback directo de admins y editores. Cada lanzamiento mejora la experiencia de quienes montan embeds, crean campañas y necesitan métricas limpias, siempre usando la paleta y los tokens que ya dominan sus proyectos.
+              Somos un equipo que recoge feedback directo de admins y editores.
+              Cada lanzamiento mejora la experiencia de quienes montan embeds,
+              crean campañas y necesitan métricas limpias, siempre usando la
+              paleta y los tokens que ya dominan sus proyectos.
             </p>
-            <Badge variant="outline" className="text-xs font-semibold uppercase tracking-wide">
+            <Badge
+              variant="outline"
+              className="text-xs font-semibold uppercase tracking-wide"
+            >
               Shadcn · globals.css
             </Badge>
           </div>
