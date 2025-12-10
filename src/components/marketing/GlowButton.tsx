@@ -11,7 +11,7 @@ import {
 import type { ColorScale } from "@/lib/constants/colors";
 import { relColors } from "@/lib/constants/colors";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 type GlowButtonProps = ComponentProps<typeof Button> & {
   glowColor?: keyof typeof relColors;

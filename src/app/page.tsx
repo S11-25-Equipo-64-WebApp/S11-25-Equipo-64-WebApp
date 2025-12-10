@@ -5,7 +5,7 @@ import { HeroGlow } from "@/components/marketing/HeroGlow";
 import { FeaturesSection } from "@/components/marketing/FeaturesSection";
 import { GlowButton } from "@/components/marketing/GlowButton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const stats = [

@@ -5,7 +5,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 
 import { Logo } from "@/components/branding/Logo";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 
 const navigation = [

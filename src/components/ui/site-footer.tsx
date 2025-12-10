@@ -3,8 +3,6 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/branding/Logo";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 const footerNav = [
   {
