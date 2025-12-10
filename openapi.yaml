@@ -1,0 +1,672 @@
+openapi: 3.1.0
+info:
+  title: Testimonios CMS API
+  version: 0.1.0
+  description: >
+    API para gestionar testimonios. Publico accede sin auth a entries publicados;
+    editores crean/editan en draft; admin publica o revierte. Auth minimalista
+    por API key asociada a usuario y rol.
+servers:
+  - url: https://api.example.com
+    description: Produccion
+  - url: http://localhost:3000
+    description: Desarrollo
+tags:
+  - name: Entries
+    description: Operaciones sobre testimonios
+  - name: Media
+    description: Firma y gestion de media en Cloudinary
+  - name: Health
+    description: Endpoints de salud (solo dev)
+  - name: Auth
+    description: Validacion de API keys (opcional)
+security: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  parameters:
+    SlugParam:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Slug unico del entry
+  responses:
+    Unauthorized:
+      description: Falta API key
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Forbidden:
+      description: Rol insuficiente
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: No encontrado o no visible
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Conflict:
+      description: Colision de slug o datos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ValidationError:
+      description: Entrada invalida
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+  schemas:
+    ServerResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int32
+        message:
+          type: string
+          nullable: true
+        data: {}
+      required:
+        - status
+        - message
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ServerResponse'
+      properties:
+        data:
+          type: object
+          nullable: true
+        code:
+          type: string
+          description: Codigo de error de negocio (opcional)
+        issues:
+          type: array
+          description: Lista de errores de validacion (p.ej. salida de zod)
+          items:
+            type: object
+            properties:
+              path:
+                type: array
+                items: { type: string }
+              message:
+                type: string
+              code:
+                type: string
+    ConcurrencyHeaders:
+      type: object
+      properties:
+        ETag:
+          type: string
+          description: Version del recurso para control de concurrencia
+      additionalProperties: false
+    EntryStatus:
+      type: string
+      enum: [draft, published]
+    MediaSource:
+      type: integer
+      description: >
+        Origen de media (enum numerico alineado con media-sources.ts: 0=NONE,
+        10=CLOUDINARY_IMAGE, 11=CLOUDINARY_VIDEO, 20=YOUTUBE_VIDEO).
+      enum: [0, 10, 11, 20]
+      examples: [20]
+      x-enum-descriptions:
+        "0": NONE (texto o sin media)
+        "10": CLOUDINARY_IMAGE
+        "11": CLOUDINARY_VIDEO
+        "20": YOUTUBE_VIDEO
+    MediaAsset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        source:
+          $ref: '#/components/schemas/MediaSource'
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+        width:
+          type: integer
+          format: int32
+        height:
+          type: integer
+          format: int32
+        durationMs:
+          type: integer
+          format: int64
+      required:
+        - id
+        - url
+        - source
+    Entry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        mediaUrl:
+          type: string
+          format: uri
+        mediaSource:
+          $ref: '#/components/schemas/MediaSource'
+        summary:
+          type: string
+        date:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        author:
+          type: string
+        status:
+          $ref: '#/components/schemas/EntryStatus'
+        slug:
+          type: string
+          description: Slug unico derivado del titulo
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        updatedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - mediaSource
+        - date
+        - author
+        - status
+        - slug
+        - createdAt
+        - updatedAt
+    MediaSignature:
+      type: object
+      properties:
+        signature:
+          type: string
+        timestamp:
+          type: integer
+          format: int64
+      required:
+        - signature
+        - timestamp
+    DeleteMediaInput:
+      type: object
+      properties:
+        public_id:
+          type: string
+          description: Cloudinary public_id
+      required:
+        - public_id
+    CloudinaryDestroyResult:
+      type: object
+      properties:
+        result:
+          type: string
+          description: Resultado de Cloudinary (ok, not found, error, etc.)
+    CreateEntryInput:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        content:
+          type: string
+          maxLength: 5000
+        mediaUrl:
+          type: string
+          format: uri
+        mediaSource:
+          $ref: '#/components/schemas/MediaSource'
+        summary:
+          type: string
+          maxLength: 280
+        date:
+          type: string
+          format: date-time
+          description: Fecha de publicacion prevista o de captura
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          uniqueItems: true
+          maxItems: 10
+        author:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          description: Slug opcional; si no se envia se genera a partir del titulo
+      required:
+        - title
+        - author
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [user, editor, admin]
+        org:
+          type: string
+      required:
+        - id
+        - role
+        - org
+    UpdateEntryInput:
+      type: object
+      description: >
+        Actualiza campos del entry. Editar fuerza estado draft y nuevo slug si cambia el titulo.
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        mediaUrl:
+          type: string
+          format: uri
+        mediaSource:
+          $ref: '#/components/schemas/MediaSource'
+        summary:
+          type: string
+        date:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        author:
+          type: string
+        status:
+          $ref: '#/components/schemas/EntryStatus'
+    ApproveEntryInput:
+      type: object
+      properties:
+        approve:
+          type: boolean
+          description: true aprueba; false revierte a draft
+      required:
+        - approve
+
+paths:
+  /api/v1/auth/validate:
+    post:
+      tags: [Auth]
+      summary: Valida API key y devuelve perfil/rol.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Perfil valido
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: Error inesperado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/v1/entries:
+    get:
+      tags: [Entries]
+      summary: Lista entries. Publico ve solo published; drafts solo con API key de editor/admin.
+      parameters:
+        - name: includeDrafts
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Solo para editor/admin; requiere API key. Sin key devuelve solo published.
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [published, draft]
+          description: Filtra por estado; draft requiere API key con rol.
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtra por tag exacto.
+        - name: author
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filtra por autor.
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+          description: Orden por fecha.
+      security:
+        - {}
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Lista de entries
+          headers:
+            Cache-Control:
+              description: Puede incluir directivas de cache para SSG/ISR
+              schema: { type: string }
+      responses:
+        '200':
+          description: Lista de entries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Entry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Error inesperado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    post:
+      tags: [Entries]
+      summary: Crea entry (editor/admin). Siempre queda en draft y con slug unico.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntryInput'
+      responses:
+        '201':
+          description: Entry creado (draft)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Entry'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          description: Error inesperado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/v1/entries/{slug}:
+    get:
+      tags: [Entries]
+      summary: Obtiene entry por slug. Publico ve solo published; drafts requieren API key de editor/admin.
+      parameters:
+        - $ref: '#/components/parameters/SlugParam'
+      security:
+        - {}
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Entry encontrado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Entry'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: Error inesperado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    patch:
+      tags: [Entries]
+      summary: Actualiza entry (editor/admin). Fuerza estado draft y nuevo slug si cambia el titulo.
+      parameters:
+        - $ref: '#/components/parameters/OrgParam'
+        - $ref: '#/components/parameters/SlugParam'
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEntryInput'
+      responses:
+        '200':
+          description: Entry actualizado (draft)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Entry'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          description: Error inesperado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/v1/entries/{slug}/approve:
+    post:
+      tags: [Entries]
+      summary: Cambia estado de entry (solo admin). approve=true publica; false revierte a draft.
+      parameters:
+        - $ref: '#/components/parameters/SlugParam'
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveEntryInput'
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Entry'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Error inesperado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/v1/health:
+    get:
+      tags: [Health]
+      summary: Healthcheck (solo dev). Devuelve 404 fuera de desarrollo.
+      security: []
+      responses:
+        '200':
+          description: OK (solo en desarrollo)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  env:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: No disponible en prod
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/v1/media/sign:
+    post:
+      tags: [Media]
+      summary: Devuelve firma y timestamp para subida a Cloudinary (usa folder por defecto).
+      description: |
+        No requiere body. Responde 500 si Cloudinary no esta configurado.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Firma generada
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MediaSignature'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: Cloudinary no configurado o error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /api/v1/media/delete:
+    delete:
+      tags: [Media]
+      summary: Elimina un asset de Cloudinary por public_id.
+      description: |
+        Valida body con zod. Devuelve 404 si el asset no existe.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMediaInput'
+      responses:
+        '200':
+          description: Asset eliminado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ServerResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CloudinaryDestroyResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
