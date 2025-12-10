@@ -12,7 +12,7 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/Input"
 
 type FormStatus = {
   type: "error" | "success"
