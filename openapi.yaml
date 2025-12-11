@@ -27,6 +27,10 @@ components:
       type: apiKey
       in: header
       name: x-api-key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     SlugParam:
       name: slug
@@ -37,7 +41,7 @@ components:
       description: Slug unico del entry
   responses:
     Unauthorized:
-      description: Falta API key
+      description: Faltan credenciales (API key o bearer)
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -107,7 +111,7 @@ components:
       additionalProperties: false
     EntryStatus:
       type: string
-      enum: [draft, published]
+      enum: [draft, approved]
     MediaSource:
       type: integer
       description: >
@@ -318,9 +322,12 @@ paths:
   /api/v1/auth/validate:
     post:
       tags: [Auth]
-      summary: Valida API key y devuelve perfil/rol.
+      summary: Valida credenciales (API key o bearer) y devuelve perfil/rol.
+      description: >
+        Acepta `x-api-key` o `Authorization: Bearer <token>` emitido por Supabase. Devuelve rol y org asociados.
       security:
         - ApiKeyAuth: []
+        - BearerAuth: []
       responses:
         '200':
           description: Perfil valido
@@ -346,7 +353,7 @@ paths:
   /api/v1/entries:
     get:
       tags: [Entries]
-      summary: Lista entries. Publico ve solo published; drafts solo con API key de editor/admin.
+      summary: Lista entries. Publico ve solo approved; drafts solo con API key o bearer de editor/admin.
       parameters:
         - name: includeDrafts
           in: query
@@ -354,13 +361,19 @@ paths:
           schema:
             type: boolean
             default: false
-          description: Solo para editor/admin; requiere API key. Sin key devuelve solo published.
+          description: Solo para editor/admin; requiere API key. Sin key devuelve solo approved.
+        - name: org
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Organizacion (default).
         - name: status
           in: query
           required: false
           schema:
             type: string
-            enum: [published, draft]
+            enum: [approved, draft]
           description: Filtra por estado; draft requiere API key con rol.
         - name: tag
           in: query
@@ -384,6 +397,7 @@ paths:
       security:
         - {}
         - ApiKeyAuth: []
+        - BearerAuth: []
       responses:
         '200':
           description: Lista de entries
@@ -391,9 +405,6 @@ paths:
             Cache-Control:
               description: Puede incluir directivas de cache para SSG/ISR
               schema: { type: string }
-      responses:
-        '200':
-          description: Lista de entries
           content:
             application/json:
               schema:
@@ -405,16 +416,12 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/Entry'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
         '500':
           description: Error inesperado
           content:
@@ -425,6 +432,7 @@ paths:
       summary: Crea entry (editor/admin). Siempre queda en draft y con slug unico.
       security:
         - ApiKeyAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -460,9 +468,15 @@ paths:
   /api/v1/entries/{slug}:
     get:
       tags: [Entries]
-      summary: Obtiene entry por slug. Publico ve solo published; drafts requieren API key de editor/admin.
+      summary: Obtiene entry por slug. Publico ve solo approved; drafts requieren API key o bearer de editor/admin.
       parameters:
         - $ref: '#/components/parameters/SlugParam'
+        - name: org
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Organizacion (default).
       security:
         - {}
         - ApiKeyAuth: []
@@ -493,10 +507,10 @@ paths:
       tags: [Entries]
       summary: Actualiza entry (editor/admin). Fuerza estado draft y nuevo slug si cambia el titulo.
       parameters:
-        - $ref: '#/components/parameters/OrgParam'
         - $ref: '#/components/parameters/SlugParam'
       security:
         - ApiKeyAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -539,6 +553,7 @@ paths:
         - $ref: '#/components/parameters/SlugParam'
       security:
         - ApiKeyAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -609,6 +624,7 @@ paths:
         No requiere body. Responde 500 si Cloudinary no esta configurado.
       security:
         - ApiKeyAuth: []
+        - BearerAuth: []
       responses:
         '200':
           description: Firma generada
@@ -639,6 +655,7 @@ paths:
         Valida body con zod. Devuelve 404 si el asset no existe.
       security:
         - ApiKeyAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
