@@ -38,7 +38,7 @@ export default function SignupPage() {
     }
 
     setLoading(true);
-    const { error: supabaseError } = await supabase.auth.signUp({
+    const { data, error: supabaseError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -48,13 +48,29 @@ export default function SignupPage() {
         },
       },
     });
-    setLoading(false);
 
     if (supabaseError) {
+      setLoading(false);
       setError(supabaseError.message);
       return;
     }
 
+    if (data.user) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: insertError } = await supabase.from("users" as any).insert({
+        id: data.user.id,
+        name: fullName,
+        role: role,
+      } as any);
+
+      if (insertError) {
+        setLoading(false);
+        setError(`Error creando perfil: ${insertError.message}`);
+        return;
+      }
+    }
+
+    setLoading(false);
     setStatus("Cuenta creada. Revisa tu correo si la verificación está habilitada.");
     setFullName("");
     setEmail("");
