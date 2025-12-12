@@ -15,6 +15,7 @@ import type {
 } from "@/app/api/v1/_data/entries";
 import { MediaSource } from "@/lib/constants/media-sources";
 import { EntryStatus } from "@/lib/enums/entry-status";
+import { logger } from "@/lib/logger";
 
 type DbEntry = {
   id: string;
@@ -37,6 +38,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 let supabaseAdmin: SupabaseClient | null = null;
+const dbLogger = logger.child({ scope: "entries-db" });
 
 function getSupabaseAdminClient() {
   if (supabaseAdmin) return supabaseAdmin;
@@ -88,23 +90,50 @@ function mapDbToEntry(row: DbEntry): EntryRecord {
   };
 }
 
+function getSupabaseErrorFields(error: unknown) {
+  if (!error || typeof error !== "object") return undefined;
+  const candidate = error as Partial<{
+    message: string;
+    details: string;
+    hint: string;
+    code: string;
+  }>;
+
+  return {
+    message: candidate.message,
+    details: candidate.details,
+    hint: candidate.hint,
+    code: candidate.code,
+  };
+}
+
 async function isSlugTaken(slug: string, org: string, excludeId?: string) {
   const client = getSupabaseAdminClient();
   if (!client) return false;
   let query = client.from("entries").select("id").eq("org", org).eq("slug", slug);
   if (excludeId) query = query.neq("id", excludeId);
   const { data, error } = await query.maybeSingle();
-  if (error) return false;
+  if (error) {
+    dbLogger.warn(
+      { op: "isSlugTaken", org, slug, excludeId, error: getSupabaseErrorFields(error) },
+      "Supabase query failed"
+    );
+    return false;
+  }
   return Boolean(data);
 }
 
 export async function listEntriesDb(options: ListEntriesOptions): Promise<EntryRecord[]> {
   const client = getSupabaseAdminClient();
-  if (!client) return [];
+  if (!client) {
+    dbLogger.debug({ op: "listEntriesDb" }, "Supabase client unavailable");
+    return [];
+  }
 
   const org = options.org ?? "default";
   const sortOrder = options.sort ?? "date_desc";
 
+  const startedAt = Date.now();
   let query = client.from("entries").select("*").eq("org", org);
 
   if (!options.includeDrafts) {
@@ -123,15 +152,45 @@ export async function listEntriesDb(options: ListEntriesOptions): Promise<EntryR
   query = query.order("date", { ascending: sortOrder === "date_asc" });
 
   const { data, error } = await query;
-  if (error || !data) return [];
+  if (error || !data) {
+    dbLogger.warn(
+      {
+        op: "listEntriesDb",
+        org,
+        includeDrafts: options.includeDrafts,
+        status: options.status,
+        tag: options.tag,
+        author: options.author,
+        sort: options.sort,
+        durationMs: Date.now() - startedAt,
+        error: getSupabaseErrorFields(error),
+      },
+      "Failed to list entries from DB"
+    );
+    return [];
+  }
+
+  dbLogger.debug(
+    {
+      op: "listEntriesDb",
+      org,
+      count: (data as DbEntry[]).length,
+      durationMs: Date.now() - startedAt,
+    },
+    "Listed entries from DB"
+  );
 
   return (data as DbEntry[]).map(mapDbToEntry);
 }
 
 export async function findEntryBySlugDb(slug: string, org = "default") {
   const client = getSupabaseAdminClient();
-  if (!client) return undefined;
+  if (!client) {
+    dbLogger.debug({ op: "findEntryBySlugDb", org, slug }, "Supabase client unavailable");
+    return undefined;
+  }
 
+  const startedAt = Date.now();
   const { data, error } = await client
     .from("entries")
     .select("*")
@@ -139,18 +198,46 @@ export async function findEntryBySlugDb(slug: string, org = "default") {
     .eq("org", org)
     .maybeSingle();
 
-  if (error || !data) return undefined;
+  if (error || !data) {
+    if (error) {
+      dbLogger.warn(
+        {
+          op: "findEntryBySlugDb",
+          org,
+          slug,
+          durationMs: Date.now() - startedAt,
+          error: getSupabaseErrorFields(error),
+        },
+        "Failed to fetch entry from DB"
+      );
+    } else {
+      dbLogger.debug(
+        { op: "findEntryBySlugDb", org, slug, durationMs: Date.now() - startedAt },
+        "Entry not found in DB"
+      );
+    }
+    return undefined;
+  }
+
+  dbLogger.debug(
+    { op: "findEntryBySlugDb", org, slug, id: (data as DbEntry).id, durationMs: Date.now() - startedAt },
+    "Fetched entry from DB"
+  );
   return mapDbToEntry(data as DbEntry);
 }
 
 export async function createEntryDb(payload: CreateEntryPayload): Promise<EntryMutationResult> {
   const client = getSupabaseAdminClient();
-  if (!client) return { ok: false, error: "conflict" };
+  if (!client) {
+    dbLogger.warn({ op: "createEntryDb" }, "Supabase client unavailable");
+    return { ok: false, error: "conflict" };
+  }
 
   const baseSlug = slugify(payload.slug ?? payload.title);
   const org = payload.org ?? "default";
 
   if (await isSlugTaken(baseSlug, org)) {
+    dbLogger.info({ op: "createEntryDb", org, slug: baseSlug }, "Slug conflict on create");
     return { ok: false, error: "conflict" };
   }
 
@@ -173,6 +260,7 @@ export async function createEntryDb(payload: CreateEntryPayload): Promise<EntryM
     updated_at: nowIso,
   };
 
+  const startedAt = Date.now();
   const { data, error } = await client
     .from("entries")
     .insert(insertPayload)
@@ -180,9 +268,29 @@ export async function createEntryDb(payload: CreateEntryPayload): Promise<EntryM
     .single();
 
   if (error || !data) {
+    dbLogger.warn(
+      {
+        op: "createEntryDb",
+        org,
+        slug: baseSlug,
+        durationMs: Date.now() - startedAt,
+        error: getSupabaseErrorFields(error),
+      },
+      "Failed to create entry in DB"
+    );
     return { ok: false, error: "conflict" };
   }
 
+  dbLogger.info(
+    {
+      op: "createEntryDb",
+      org,
+      slug: (data as DbEntry).slug,
+      id: (data as DbEntry).id,
+      durationMs: Date.now() - startedAt,
+    },
+    "Created entry in DB"
+  );
   return { ok: true, entry: mapDbToEntry(data as DbEntry) };
 }
 
@@ -193,18 +301,26 @@ export async function updateEntryDb(
   expectedEtag?: string | null
 ): Promise<EntryMutationResult> {
   const client = getSupabaseAdminClient();
-  if (!client) return { ok: false, error: "not_found" };
+  if (!client) {
+    dbLogger.warn({ op: "updateEntryDb", org, slug }, "Supabase client unavailable");
+    return { ok: false, error: "not_found" };
+  }
 
   const current = await findEntryBySlugDb(slug, org);
   if (!current) return { ok: false, error: "not_found" };
 
   const normalized = normalizeEtag(expectedEtag);
   if (normalized && normalized !== current.updatedAt) {
+    dbLogger.info({ op: "updateEntryDb", org, slug, id: current.id }, "ETag precondition failed");
     return { ok: false, error: "precondition_failed" };
   }
 
   const nextSlug = payload.title !== undefined ? slugify(payload.title) : current.slug;
   if (nextSlug !== current.slug && (await isSlugTaken(nextSlug, org, current.id))) {
+    dbLogger.info(
+      { op: "updateEntryDb", org, slug, id: current.id, nextSlug },
+      "Slug conflict on update"
+    );
     return { ok: false, error: "conflict" };
   }
 
@@ -226,6 +342,7 @@ export async function updateEntryDb(
   if (payload.tags !== undefined) updates.tags = payload.tags ?? null;
   if (payload.author !== undefined) updates.author = payload.author;
 
+  const startedAt = Date.now();
   const { data, error } = await client
     .from("entries")
     .update(updates)
@@ -234,9 +351,30 @@ export async function updateEntryDb(
     .single();
 
   if (error || !data) {
+    dbLogger.warn(
+      {
+        op: "updateEntryDb",
+        org,
+        slug,
+        id: current.id,
+        durationMs: Date.now() - startedAt,
+        error: getSupabaseErrorFields(error),
+      },
+      "Failed to update entry in DB"
+    );
     return { ok: false, error: "not_found" };
   }
 
+  dbLogger.info(
+    {
+      op: "updateEntryDb",
+      org,
+      slug: (data as DbEntry).slug,
+      id: (data as DbEntry).id,
+      durationMs: Date.now() - startedAt,
+    },
+    "Updated entry in DB"
+  );
   return { ok: true, entry: mapDbToEntry(data as DbEntry) };
 }
 
@@ -247,13 +385,17 @@ export async function approveEntryDb(
   expectedEtag?: string | null
 ): Promise<EntryMutationResult> {
   const client = getSupabaseAdminClient();
-  if (!client) return { ok: false, error: "not_found" };
+  if (!client) {
+    dbLogger.warn({ op: "approveEntryDb", org, slug }, "Supabase client unavailable");
+    return { ok: false, error: "not_found" };
+  }
 
   const current = await findEntryBySlugDb(slug, org);
   if (!current) return { ok: false, error: "not_found" };
 
   const normalized = normalizeEtag(expectedEtag);
   if (normalized && normalized !== current.updatedAt) {
+    dbLogger.info({ op: "approveEntryDb", org, slug, id: current.id }, "ETag precondition failed");
     return { ok: false, error: "precondition_failed" };
   }
 
@@ -263,6 +405,7 @@ export async function approveEntryDb(
     updated_at: nowIso,
   };
 
+  const startedAt = Date.now();
   const { data, error } = await client
     .from("entries")
     .update(updates)
@@ -271,9 +414,31 @@ export async function approveEntryDb(
     .single();
 
   if (error || !data) {
+    dbLogger.warn(
+      {
+        op: "approveEntryDb",
+        org,
+        slug,
+        id: current.id,
+        approve,
+        durationMs: Date.now() - startedAt,
+        error: getSupabaseErrorFields(error),
+      },
+      "Failed to approve entry in DB"
+    );
     return { ok: false, error: "not_found" };
   }
 
+  dbLogger.info(
+    {
+      op: "approveEntryDb",
+      org,
+      slug: (data as DbEntry).slug,
+      id: (data as DbEntry).id,
+      approve,
+      durationMs: Date.now() - startedAt,
+    },
+    "Updated approval status in DB"
+  );
   return { ok: true, entry: mapDbToEntry(data as DbEntry) };
 }
-

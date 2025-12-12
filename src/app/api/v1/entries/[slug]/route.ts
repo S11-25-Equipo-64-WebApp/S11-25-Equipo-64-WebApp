@@ -23,6 +23,7 @@ import {
 } from "@/app/api/v1/_data/entries-db";
 import { MediaSource } from "@/lib/constants/media-sources";
 import { EntryStatus } from "@/lib/enums/entry-status";
+import { withErrorLogging } from "@/app/api/helpers/with-error-logging";
 
 type RouteContext = {
   params: Promise<{ slug: string }> | { slug: string };
@@ -59,10 +60,7 @@ const updateEntrySchema: z.ZodType<UpdateEntryPayload> = z
     path: ["body"],
   });
 
-export async function GET(
-  request: NextRequest,
-  context: RouteContext
-) {
+export const GET = withErrorLogging(async (request: NextRequest, context: RouteContext) => {
   const params = await Promise.resolve(context.params);
   const slug = params.slug ?? request.nextUrl.searchParams.get("slug");
   const org = request.nextUrl.searchParams.get("org") ?? "default";
@@ -108,12 +106,9 @@ export async function GET(
   }
 
   return response;
-}
+}, "GET /api/v1/entries/[slug]");
 
-export async function PATCH(
-  request: NextRequest,
-  context: RouteContext
-) {
+export const PATCH = withErrorLogging(async (request: NextRequest, context: RouteContext) => {
   const auth = await requireAuth(request, ["editor", "admin"]);
   if (auth.error) return auth.error;
 
@@ -172,4 +167,4 @@ export async function PATCH(
   const response = jsonResponse(200, "Entry updated (draft)", result.entry);
   response.headers.set("ETag", getEntryEtag(result.entry));
   return response;
-}
+}, "PATCH /api/v1/entries/[slug]");

@@ -18,13 +18,18 @@ const approveSchema = z.object({
   approve: z.boolean(),
 });
 
+type RouteContext = {
+  params?: Promise<{ slug?: string }> | { slug?: string };
+  user?: { org?: string };
+};
+
 export const POST = withAuth(
   async (
     request: NextRequest,
-    context?: { params?: { slug?: string }; user?: { org?: string } }
+    context?: RouteContext
   ) => {
-    const slug =
-      context?.params?.slug ?? request.nextUrl.searchParams.get("slug");
+    const params = await Promise.resolve(context?.params);
+    const slug = params?.slug ?? request.nextUrl.searchParams.get("slug");
 
     if (!slug) {
       return validationError("Slug is required", [

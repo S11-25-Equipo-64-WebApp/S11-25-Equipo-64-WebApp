@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  serverExternalPackages: ["pino", "pino-pretty", "thread-stream"],
 };
 
 export default nextConfig;

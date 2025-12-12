@@ -17,6 +17,7 @@ import {
 import { MediaSource } from "@/lib/constants/media-sources";
 import { EntryStatus } from "@/lib/enums/entry-status";
 import { withAuth } from "@/app/api/helpers/with-auth";
+import { withErrorLogging } from "@/app/api/helpers/with-error-logging";
 
 const mediaSourceSchema = z.union([
   z.literal(MediaSource.NONE),
@@ -48,7 +49,7 @@ const createEntrySchema: z.ZodType<CreateEntryPayload> = z.object({
   org: z.string().optional(),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorLogging(async (request: NextRequest) => {
   const { searchParams } = request.nextUrl;
   const includeDraftsParam = searchParams.get("includeDrafts");
   const statusParam = searchParams.get("status");
@@ -129,7 +130,7 @@ export async function GET(request: NextRequest) {
   }
 
   return response;
-}
+}, "GET /api/v1/entries");
 
 export const POST = withAuth(
   async (request: NextRequest, context?: { user?: { org?: string } }) => {

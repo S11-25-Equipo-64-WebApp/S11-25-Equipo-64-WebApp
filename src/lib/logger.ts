@@ -1,10 +1,13 @@
-import "server-only";
+if (typeof process !== "undefined" && process.env.NODE_ENV !== "test") {
+  await import("server-only");
+}
 
 import fs from "fs";
 import path from "path";
 import pino from "pino";
 import pretty from "pino-pretty";
 const isProduction = process.env.NODE_ENV === "production";
+const isTest = process.env.NODE_ENV === "test";
 
 const logDir = process.env.LOG_DIR ?? path.join(process.cwd(), "log");
 const resolvedLogDir = path.isAbsolute(logDir)
@@ -15,7 +18,9 @@ const logFile = path.join(resolvedLogDir, "app.log");
 // --- STREAMS ---
 const streams: pino.DestinationStream[] = [];
 
-if (isProduction) {
+if (isTest) {
+  streams.push(pino.destination(1));
+} else if (isProduction) {
   // write to stdout
   streams.push(pino.destination(1));
 } else {
@@ -43,7 +48,7 @@ if (isProduction) {
 // --- CONFIG ---
 const logger = pino(
   {
-    level: process.env.LOG_LEVEL ?? (isProduction ? "info" : "debug"),
+    level: process.env.LOG_LEVEL ?? (isTest ? "silent" : isProduction ? "info" : "debug"),
     base: undefined,
     messageKey: "message",
     formatters: {
