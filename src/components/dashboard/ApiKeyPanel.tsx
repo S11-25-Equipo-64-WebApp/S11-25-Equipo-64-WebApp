@@ -64,7 +64,7 @@ export function ApiKeyPanel() {
 
   const handleValidate = async () => {
     setFeedback(null);
-    const result = await validateKey();
+    const result = await validateKey(localKey);
     if (result.error) {
       setFeedback({ state: "error", message: result.error.message });
     } else if (result.data) {

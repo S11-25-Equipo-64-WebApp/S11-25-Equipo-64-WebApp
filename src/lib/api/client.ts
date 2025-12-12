@@ -1,6 +1,4 @@
-import createClient from "openapi-fetch";
-
-import type { components, paths } from "@/lib/schema";
+import type { components } from "@/lib/schema";
 
 export type Entry = components["schemas"]["Entry"];
 export type EntryStatus = components["schemas"]["EntryStatus"];
@@ -50,15 +48,11 @@ function trimEmpty<T extends Record<string, unknown>>(value: T) {
 }
 
 export class ApiClient {
-  private client;
   private etags = new Map<string, string>();
   private readonly baseUrl: string;
 
   constructor(baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "") {
     this.baseUrl = baseUrl;
-    this.client = createClient<paths>({
-      baseUrl: baseUrl || undefined,
-    });
   }
 
   getBaseUrl() {
@@ -89,6 +83,77 @@ export class ApiClient {
     return headers;
   }
 
+  private buildUrl(
+    path: string,
+    query?: Record<string, string | number | boolean | undefined>
+  ) {
+    if (!this.baseUrl) {
+      if (!query) return path;
+      const params = new URLSearchParams();
+      Object.entries(query).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        params.set(key, String(value));
+      });
+      const qs = params.toString();
+      return qs ? `${path}?${qs}` : path;
+    }
+
+    const url = new URL(path, this.baseUrl);
+    if (query) {
+      Object.entries(query).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        url.searchParams.set(key, String(value));
+      });
+    }
+    return url.toString();
+  }
+
+  private async request<T>(
+    path: string,
+    init: RequestInit,
+    {
+      slugForEtag,
+      fallbackMessage,
+    }: { slugForEtag?: string | null; fallbackMessage: string }
+  ): Promise<ApiResult<T>> {
+    let response: Response;
+    try {
+      response = await fetch(path, init);
+    } catch {
+      return {
+        error: this.buildError(
+          { response: undefined, data: undefined },
+          fallbackMessage
+        ),
+      };
+    }
+
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = undefined;
+    }
+
+    if (!response.ok) {
+      return {
+        error: this.buildError(
+          { response, data: payload as ErrorResponse },
+          fallbackMessage
+        ),
+        response,
+      };
+    }
+
+    this.rememberEtag(slugForEtag ?? null, response);
+
+    return {
+      data: (payload as { data?: T } | undefined)?.data,
+      response,
+      etag: slugForEtag ? this.getCachedEtag(slugForEtag) : undefined,
+    };
+  }
+
   private buildError(
     payload: { response?: Response; data?: ErrorResponse },
     fallback = "Ocurrió un error inesperado"
@@ -103,21 +168,12 @@ export class ApiClient {
   }
 
   async validateKey(apiKey: string): Promise<ApiResult<UserProfile>> {
-    try {
-      const { data, error, response } = await this.client.POST("/api/v1/auth/validate", {
-        headers: this.buildHeaders({ apiKey }),
-      });
-
-      if (error) {
-        return { error: this.buildError({ response, data: error }, "API key inválida"), response };
-      }
-
-      return { data: data?.data, response };
-    } catch {
-      return {
-        error: this.buildError({ response: undefined, data: undefined }, "No se pudo validar la API key"),
-      };
-    }
+    const url = this.buildUrl("/api/v1/auth/validate");
+    return this.request<UserProfile>(
+      url,
+      { method: "POST", headers: this.buildHeaders({ apiKey }) },
+      { fallbackMessage: "No se pudo validar la API key" }
+    );
   }
 
   async listEntries({
@@ -135,74 +191,67 @@ export class ApiClient {
     };
     org?: string;
   }): Promise<ApiResult<Entry[]>> {
-    try {
-      const { data, error, response } = await this.client.GET("/api/v1/entries", {
-        params: { query: trimEmpty({ ...filters, org }) },
-        headers: this.buildHeaders(auth),
-      });
+    const url = this.buildUrl(
+      "/api/v1/entries",
+      trimEmpty({ ...filters, org }) as Record<
+        string,
+        string | number | boolean | undefined
+      >
+    );
 
-      if (error) {
-        return {
-          error: this.buildError({ response, data: error }, "No se pudieron cargar los testimonios"),
-          response,
-        };
-      }
+    const result = await this.request<Entry[]>(
+      url,
+      { method: "GET", headers: this.buildHeaders(auth) },
+      { fallbackMessage: "No se pudieron cargar los testimonios" }
+    );
 
-      return { data: data?.data ?? [], response };
-    } catch {
-      return {
-        error: this.buildError({ response: undefined, data: undefined }, "No se pudieron cargar los testimonios"),
-      };
+    if (result.data === undefined && !result.error) {
+      return { ...result, data: [] };
     }
+
+    return result;
   }
 
   async getEntry(slug: string, auth?: AuthHeaders, org?: string): Promise<ApiResult<Entry>> {
-    try {
-      const { data, error, response } = await this.client.GET("/api/v1/entries/{slug}", {
-        params: { path: { slug }, query: trimEmpty({ org }) },
-        headers: this.buildHeaders(auth),
-      });
-
-      if (error) {
-        return {
-          error: this.buildError({ response, data: error }, "No se encontró el testimonio"),
-          response,
-        };
-      }
-
-      this.rememberEtag(slug, response);
-      return { data: data?.data, response, etag: this.getCachedEtag(slug) };
-    } catch {
-      return {
-        error: this.buildError({ response: undefined, data: undefined }, "No se encontró el testimonio"),
-      };
-    }
+    const url = this.buildUrl(
+      `/api/v1/entries/${slug}`,
+      trimEmpty({ org }) as Record<
+        string,
+        string | number | boolean | undefined
+      >
+    );
+    return this.request<Entry>(
+      url,
+      { method: "GET", headers: this.buildHeaders(auth) },
+      { slugForEtag: slug, fallbackMessage: "No se encontró el testimonio" }
+    );
   }
 
   async createEntry(
     body: CreateEntryInput,
     auth: AuthHeaders
   ): Promise<ApiResult<Entry>> {
-    try {
-      const { data, error, response } = await this.client.POST("/api/v1/entries", {
-        body,
-        headers: this.buildHeaders(auth),
-      });
+    const url = this.buildUrl("/api/v1/entries");
+    const result = await this.request<Entry>(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...this.buildHeaders(auth),
+        },
+        body: JSON.stringify(body),
+      },
+      { fallbackMessage: "No se pudo crear la entrada" }
+    );
 
-      if (error) {
-        return {
-          error: this.buildError({ response, data: error }, "No se pudo crear la entrada"),
-          response,
-        };
-      }
-
-      this.rememberEtag(data?.data?.slug ?? null, response);
-      return { data: data?.data, response, etag: this.getCachedEtag(data?.data?.slug ?? "") };
-    } catch {
-      return {
-        error: this.buildError({ response: undefined, data: undefined }, "No se pudo crear la entrada"),
-      };
+    const createdSlug = result.data?.slug;
+    if (createdSlug && result.response) {
+      this.rememberEtag(createdSlug, result.response);
+      return { ...result, etag: this.getCachedEtag(createdSlug) };
     }
+
+    return result;
   }
 
   async updateEntry(
@@ -211,94 +260,60 @@ export class ApiClient {
     auth: AuthHeaders,
     ifMatch?: string
   ): Promise<ApiResult<Entry>> {
-    try {
-      const etag = ifMatch ?? this.getCachedEtag(slug);
-      const { data, error, response } = await this.client.PATCH("/api/v1/entries/{slug}", {
-        params: { path: { slug } },
-        body,
-        headers: this.buildHeaders(auth, etag),
-      });
-
-      if (error) {
-        return {
-          error: this.buildError({ response, data: error }, "No se pudo actualizar la entrada"),
-          response,
-        };
-      }
-
-      this.rememberEtag(slug, response);
-      return { data: data?.data, response, etag: this.getCachedEtag(slug) };
-    } catch {
-      return {
-        error: this.buildError({ response: undefined, data: undefined }, "No se pudo actualizar la entrada"),
-      };
-    }
+    const url = this.buildUrl(`/api/v1/entries/${slug}`);
+    const etag = ifMatch ?? this.getCachedEtag(slug);
+    return this.request<Entry>(
+      url,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...this.buildHeaders(auth, etag),
+        },
+        body: JSON.stringify(body),
+      },
+      { slugForEtag: slug, fallbackMessage: "No se pudo actualizar la entrada" }
+    );
   }
 
   async approveEntry(slug: string, approve: boolean, auth: AuthHeaders): Promise<ApiResult<Entry>> {
-    try {
-      const { data, error, response } = await this.client.POST("/api/v1/entries/{slug}/approve", {
-        params: { path: { slug } },
-        body: { approve },
-        headers: this.buildHeaders(auth),
-      });
-
-      if (error) {
-        return {
-          error: this.buildError({ response, data: error }, "No se pudo cambiar el estado"),
-          response,
-        };
-      }
-
-      this.rememberEtag(slug, response);
-      return { data: data?.data, response, etag: this.getCachedEtag(slug) };
-    } catch {
-      return {
-        error: this.buildError({ response: undefined, data: undefined }, "No se pudo cambiar el estado"),
-      };
-    }
+    const url = this.buildUrl(`/api/v1/entries/${slug}/approve`);
+    return this.request<Entry>(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...this.buildHeaders(auth),
+        },
+        body: JSON.stringify({ approve }),
+      },
+      { slugForEtag: slug, fallbackMessage: "No se pudo cambiar el estado" }
+    );
   }
 
   async signMedia(auth: AuthHeaders): Promise<ApiResult<MediaSignature>> {
-    try {
-      const { data, error, response } = await this.client.POST("/api/v1/media/sign", {
-        headers: this.buildHeaders(auth),
-      });
-
-      if (error) {
-        return {
-          error: this.buildError({ response, data: error }, "No se pudo generar la firma"),
-          response,
-        };
-      }
-
-      return { data: data?.data, response };
-    } catch {
-      return {
-        error: this.buildError({ response: undefined, data: undefined }, "No se pudo generar la firma"),
-      };
-    }
+    const url = this.buildUrl("/api/v1/media/sign");
+    return this.request<MediaSignature>(
+      url,
+      { method: "POST", headers: this.buildHeaders(auth) },
+      { fallbackMessage: "No se pudo generar la firma" }
+    );
   }
 
   async deleteMedia(publicId: string, auth: AuthHeaders): Promise<ApiResult<CloudinaryDestroyResult>> {
-    try {
-      const { data, error, response } = await this.client.DELETE("/api/v1/media/delete", {
-        body: { public_id: publicId },
-        headers: this.buildHeaders(auth),
-      });
-
-      if (error) {
-        return {
-          error: this.buildError({ response, data: error }, "No se pudo eliminar el asset"),
-          response,
-        };
-      }
-
-      return { data: data?.data, response };
-    } catch {
-      return {
-        error: this.buildError({ response: undefined, data: undefined }, "No se pudo eliminar el asset"),
-      };
-    }
+    const url = this.buildUrl("/api/v1/media/delete");
+    return this.request<CloudinaryDestroyResult>(
+      url,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...this.buildHeaders(auth),
+        },
+        body: JSON.stringify({ public_id: publicId }),
+      },
+      { fallbackMessage: "No se pudo eliminar el asset" }
+    );
   }
 }

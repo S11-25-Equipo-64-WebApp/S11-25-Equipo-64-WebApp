@@ -9,6 +9,11 @@ import {
   getEntryEtag,
   listEntries,
 } from "@/app/api/v1/_data/entries";
+import {
+  createEntryDb,
+  isEntriesDbEnabled,
+  listEntriesDb,
+} from "@/app/api/v1/_data/entries-db";
 import { MediaSource } from "@/lib/constants/media-sources";
 import { EntryStatus } from "@/lib/enums/entry-status";
 import { withAuth } from "@/app/api/helpers/with-auth";
@@ -96,14 +101,23 @@ export async function GET(request: NextRequest) {
   const includeDrafts =
     hasEditorAccess(role) && (wantsDrafts || status === EntryStatus.DRAFT);
 
-  const data = listEntries({
-    includeDrafts,
-    status,
-    tag,
-    author,
-    sort,
-    org,
-  });
+  const data = isEntriesDbEnabled()
+    ? await listEntriesDb({
+        includeDrafts,
+        status,
+        tag,
+        author,
+        sort,
+        org,
+      })
+    : listEntries({
+        includeDrafts,
+        status,
+        tag,
+        author,
+        sort,
+        org,
+      });
 
   const response = jsonResponse(200, "Entries retrieved", data);
 
@@ -134,7 +148,9 @@ export const POST = withAuth(
       return validationError("Invalid request body", body.error.issues);
     }
 
-    const result = createEntry({ ...body.data, org: context?.user?.org ?? "default" });
+    const result = isEntriesDbEnabled()
+      ? await createEntryDb({ ...body.data, org: context?.user?.org ?? "default" })
+      : createEntry({ ...body.data, org: context?.user?.org ?? "default" });
 
     if (!result.ok) {
       return conflict("Slug already exists", [

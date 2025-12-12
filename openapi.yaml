@@ -185,6 +185,9 @@ components:
           type: string
           description: Slug unico derivado del titulo
           pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        org:
+          type: string
+          description: Organización / workspace del entry
         updatedAt:
           type: string
           format: date-time
@@ -199,6 +202,7 @@ components:
         - author
         - status
         - slug
+        - org
         - createdAt
         - updatedAt
     MediaSignature:
@@ -209,9 +213,13 @@ components:
         timestamp:
           type: integer
           format: int64
+        folder:
+          type: string
+          description: Folder destino para subida firmada
       required:
         - signature
         - timestamp
+        - folder
     DeleteMediaInput:
       type: object
       properties:

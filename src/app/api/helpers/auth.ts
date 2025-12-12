@@ -73,7 +73,8 @@ function getBearerToken(request: NextRequest) {
 function normalizeRole(role: unknown): ApiRole {
   if (role === "admin") return "admin";
   if (role === "editor") return "editor";
-  return "editor";
+  if (role === "user") return "user";
+  return "user";
 }
 
 function resolveTestBearerToken(token: string): ApiUser | null {

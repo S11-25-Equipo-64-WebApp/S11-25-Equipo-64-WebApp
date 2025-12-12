@@ -1,32 +1,20 @@
-type Entry = {
-  id: string;
-  title: string;
-  summary?: string;
-  content?: string;
-  mediaUrl?: string;
-  mediaSource: number;
-  date: string;
-  tags?: string[];
-  author: string;
-  status: string;
-  slug: string;
-};
+import { EntryStatus } from "@/lib/enums/entry-status";
 
-type ApiResponse<T> = {
-  status: number;
-  message: string | null;
-  data: T;
-};
+import { findEntryBySlugDb, isEntriesDbEnabled } from "@/app/api/v1/_data/entries-db";
+import { findEntryBySlug, type EntryRecord } from "@/app/api/v1/_data/entries";
 
-async function fetchEntry(org: string, slug: string): Promise<Entry | null> {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.SITE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/v1/entries/${slug}?org=${org}`, {
-    cache: "force-cache",
-  });
-  if (!res.ok) return null;
-  const json = (await res.json()) as ApiResponse<Entry>;
-  return json.data ?? null;
+export const revalidate = 60;
+
+async function fetchEntry(org: string, slug: string): Promise<EntryRecord | null> {
+  if (isEntriesDbEnabled()) {
+    const entry = await findEntryBySlugDb(slug, org);
+    if (!entry || entry.status !== EntryStatus.APPROVED) return null;
+    return entry;
+  }
+
+  const entry = findEntryBySlug(slug, org);
+  if (!entry || entry.status !== EntryStatus.APPROVED) return null;
+  return entry;
 }
 
 export function generateStaticParams() {

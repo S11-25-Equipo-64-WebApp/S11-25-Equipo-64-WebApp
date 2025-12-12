@@ -28,7 +28,7 @@ type ApiContextValue = {
   authHeaders: AuthHeaders;
   setApiKey: (key: string | null) => void;
   setRole: (role: UserRole) => void;
-  validateKey: () => Promise<{ data?: UserProfile; error?: ApiError }>;
+  validateKey: (keyOverride?: string | null) => Promise<{ data?: UserProfile; error?: ApiError }>;
 };
 
 const ApiContext = createContext<ApiContextValue | undefined>(undefined);
@@ -93,18 +93,24 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem("dashboard.role", rolePreference);
   }, [rolePreference]);
 
-  const validateKey = async () => {
-    if (!apiKey) {
+  const validateKey = async (keyOverride?: string | null) => {
+    const key = keyOverride?.trim() || apiKey;
+    if (!key) {
       return { error: { status: 401, message: "Falta API key" } as ApiError };
     }
 
     setIsValidating(true);
-    const result = await client.validateKey(apiKey);
+    const result = await client.validateKey(key);
     setIsValidating(false);
 
     if (result.data) {
+      setApiKeyState(key);
       setProfile(result.data);
       setRole(result.data.role === "admin" ? "admin" : "editor");
+    }
+
+    if (result.error) {
+      setProfile(null);
     }
 
     return result;

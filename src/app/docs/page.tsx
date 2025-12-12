@@ -6,8 +6,8 @@ export default function DocsPage() {
     { method: "GET", path: "/api/v1/entries/{slug}", desc: "Obtiene entry por slug." },
     { method: "PATCH", path: "/api/v1/entries/{slug}", desc: "Actualiza draft; usa If-Match para control de ETag." },
     { method: "POST", path: "/api/v1/entries/{slug}/approve", desc: "Publica o revierte (admin)." },
-    { method: "POST", path: "/api/v1/media/sign", desc: "Firma de upload (editor/admin; mock)." },
-    { method: "DELETE", path: "/api/v1/media/delete", desc: "Borra asset por public_id (editor/admin; mock)." },
+    { method: "POST", path: "/api/v1/media/sign", desc: "Firma de upload (editor/admin; real si Cloudinary está configurado, mock si no)." },
+    { method: "DELETE", path: "/api/v1/media/delete", desc: "Borra asset por public_id (editor/admin; real si Cloudinary está configurado, mock si no)." },
     { method: "GET", path: "/api/v1/health", desc: "Healthcheck (solo dev)." },
   ];
 

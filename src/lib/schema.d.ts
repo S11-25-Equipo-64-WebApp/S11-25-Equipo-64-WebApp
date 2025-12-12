@@ -544,6 +544,7 @@ export interface components {
             status: components["schemas"]["EntryStatus"];
             /** @description Slug unico derivado del titulo */
             slug: string;
+            org: string;
             /** Format: date-time */
             updatedAt: string;
             /** Format: date-time */
@@ -553,6 +554,7 @@ export interface components {
             signature: string;
             /** Format: int64 */
             timestamp: number;
+            folder: string;
         };
         DeleteMediaInput: {
             /** @description Cloudinary public_id */

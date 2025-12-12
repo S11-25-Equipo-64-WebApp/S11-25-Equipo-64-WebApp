@@ -60,11 +60,11 @@ export function SiteFooter() {
                 <Link href="/privacy" className="transition hover:text-white">
                   Privacidad
                 </Link>
-                <Link href="/terms" className="transition hover:text-white">
+                <Link href="/terms-of-service" className="transition hover:text-white">
                   Términos
                 </Link>
-                <Link href="/contact" className="transition hover:text-white">
-                  Contacto
+                <Link href="/docs" className="transition hover:text-white">
+                  Documentación
                 </Link>
               </div>
             </div>

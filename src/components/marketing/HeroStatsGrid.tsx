@@ -41,7 +41,7 @@ const stats = [
     glowRadius: 500,
     glowOpacity: 0.45,
   },
-];
+] as const satisfies Array<Parameters<typeof HeroStatCard>[0]>;
 
 export function HeroStatsGrid() {
   return (

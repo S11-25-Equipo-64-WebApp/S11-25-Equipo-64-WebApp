@@ -1,36 +1,15 @@
 import Link from "next/link";
 
-import { EntryStatus } from "@/lib/enums/entry-status";
+import { listEntriesDb, isEntriesDbEnabled } from "@/app/api/v1/_data/entries-db";
+import { listEntries, type EntryRecord } from "@/app/api/v1/_data/entries";
 
-type Entry = {
-  id: string;
-  title: string;
-  summary?: string;
-  content?: string;
-  mediaUrl?: string;
-  mediaSource: number;
-  date: string;
-  tags?: string[];
-  author: string;
-  status: EntryStatus;
-  slug: string;
-};
+export const revalidate = 60;
 
-type ApiResponse<T> = {
-  status: number;
-  message: string | null;
-  data: T;
-};
-
-async function fetchEntries(org: string): Promise<Entry[]> {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL ?? process.env.SITE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/v1/entries?org=${org}`, {
-    cache: "force-cache",
-  });
-  if (!res.ok) return [];
-  const json = (await res.json()) as ApiResponse<Entry[]>;
-  return json.data ?? [];
+async function fetchEntries(org: string): Promise<EntryRecord[]> {
+  if (isEntriesDbEnabled()) {
+    return listEntriesDb({ includeDrafts: false, org });
+  }
+  return listEntries({ includeDrafts: false, org });
 }
 
 export function generateStaticParams() {

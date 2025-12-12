@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Testimonial CMS (Equipo 64)
 
-## Getting Started
+Next.js App Router + Bun. Incluye API REST para testimonios, dashboard con roles (user/editor/admin), y soporte opcional para Supabase + Cloudinary.
 
-First, run the development server:
+## Requisitos
+
+- Bun >= 1.x
+- Node.js 20+ (si no usas Bun global)
+- Supabase (opcional para auth bearer y persistencia)
+- Cloudinary (opcional para uploads firmados)
+
+## Setup rápido
+
+1. Instala deps:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Copia variables de entorno:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Inicia dev server:
 
-## Learn More
+```bash
+bun run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+App en `http://localhost:3000`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+El contrato está en `openapi.yaml`.
 
-## Deploy on Vercel
+- `GET /api/v1/entries` (público: solo aprobados)
+- `POST /api/v1/entries` (editor/admin)
+- `GET /api/v1/entries/{slug}`
+- `PATCH /api/v1/entries/{slug}` (If-Match / ETag)
+- `POST /api/v1/entries/{slug}/approve` (admin)
+- `POST /api/v1/media/sign` y `DELETE /api/v1/media/delete` (Cloudinary real si está configurado, mock si no)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Persistencia con Supabase (MVP)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Por defecto usamos store en memoria. Para activar DB:
+
+1. Ejecuta `docs/db.sql` en Supabase (SQL editor).
+2. Configura en `.env.local`:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `USE_DB=true` (opcional; si no está en `false` se habilita automáticamente con credenciales).
+
+## Cloudinary
+
+Para uploads firmados desde el dashboard:
+
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
+- `NEXT_PUBLIC_CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- opcional `CLOUDINARY_UPLOAD_FOLDER`
+
+## Scripts
+
+- `bun run seed` genera `data/seeded-entries.json` desde el store en memoria.
+
+## Lint/Test/Build
+
+```bash
+bun run lint
+bun test
+bun run build
+```

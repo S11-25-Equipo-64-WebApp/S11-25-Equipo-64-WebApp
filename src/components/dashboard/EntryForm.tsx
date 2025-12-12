@@ -65,7 +65,7 @@ const entrySchema = z.object({
   mediaSource: mediaSourceSchema.default(MediaSource.NONE),
 });
 
-export type EntryFormValues = z.infer<typeof entrySchema>;
+export type EntryFormValues = z.input<typeof entrySchema>;
 
 type Props = {
   mode: "create" | "edit";
@@ -119,7 +119,7 @@ function sanitizePayload(values: EntryFormValues) {
     summary: values.summary?.trim() || undefined,
     slug: values.slug?.trim() || undefined,
     mediaUrl: values.mediaUrl?.trim() || undefined,
-    mediaSource: values.mediaSource,
+    mediaSource: values.mediaSource ?? MediaSource.NONE,
     date: values.date ? new Date(values.date).toISOString() : undefined,
     tags: tags && tags.length ? tags : undefined,
   };
@@ -229,16 +229,19 @@ export function EntryForm({ mode, role, entry, etag, onSaved }: Props) {
     setUploadError(null);
     setUploadState({ status: "uploading", fileName: file.name });
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("api_key", cloudinaryConfig.apiKey);
-    formData.append("timestamp", signature.timestamp.toString());
-    formData.append("signature", signature.signature);
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("api_key", cloudinaryConfig.apiKey);
+  formData.append("timestamp", signature.timestamp.toString());
+  formData.append("signature", signature.signature);
+  if (signature.folder) {
+    formData.append("folder", signature.folder);
+  }
 
-    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/auto/upload`;
-    const response = await fetch(uploadUrl, {
-      method: "POST",
-      body: formData,
+  const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/auto/upload`;
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    body: formData,
     });
 
     const data = await response.json();

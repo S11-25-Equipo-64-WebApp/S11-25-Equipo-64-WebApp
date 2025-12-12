@@ -12,7 +12,11 @@ let browserClient:
 export function getSupabaseClient() {
   if (browserClient) return browserClient;
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("Supabase no está configurado. Revisa las variables NEXT_PUBLIC_SUPABASE_URL/ANON_KEY.");
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "Supabase no está configurado. Revisa las variables NEXT_PUBLIC_SUPABASE_URL/ANON_KEY."
+      );
+    }
     return null;
   }
   browserClient = createClient(supabaseUrl, supabaseAnonKey);

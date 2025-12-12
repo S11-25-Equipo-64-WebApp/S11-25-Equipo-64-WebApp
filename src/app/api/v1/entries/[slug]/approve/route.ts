@@ -8,6 +8,10 @@ import {
   validationError,
 } from "@/app/api/helpers/response";
 import { approveEntry, getEntryEtag } from "@/app/api/v1/_data/entries";
+import {
+  approveEntryDb,
+  isEntriesDbEnabled,
+} from "@/app/api/v1/_data/entries-db";
 import { withAuth } from "@/app/api/helpers/with-auth";
 
 const approveSchema = z.object({
@@ -47,12 +51,19 @@ export const POST = withAuth(
     }
 
     const ifMatch = request.headers.get("if-match");
-    const result = approveEntry(
-      slug,
-      context?.user?.org ?? "default",
-      body.data.approve,
-      ifMatch
-    );
+    const result = isEntriesDbEnabled()
+      ? await approveEntryDb(
+          slug,
+          context?.user?.org ?? "default",
+          body.data.approve,
+          ifMatch
+        )
+      : approveEntry(
+          slug,
+          context?.user?.org ?? "default",
+          body.data.approve,
+          ifMatch
+        );
 
     if (!result.ok) {
       if (result.error === "precondition_failed") {

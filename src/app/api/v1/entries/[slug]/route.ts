@@ -16,8 +16,17 @@ import {
   getEntryEtag,
   updateEntry,
 } from "@/app/api/v1/_data/entries";
+import {
+  findEntryBySlugDb,
+  isEntriesDbEnabled,
+  updateEntryDb,
+} from "@/app/api/v1/_data/entries-db";
 import { MediaSource } from "@/lib/constants/media-sources";
 import { EntryStatus } from "@/lib/enums/entry-status";
+
+type RouteContext = {
+  params: Promise<{ slug: string }> | { slug: string };
+};
 
 const mediaSourceSchema = z.union([
   z.literal(MediaSource.NONE),
@@ -52,10 +61,10 @@ const updateEntrySchema: z.ZodType<UpdateEntryPayload> = z
 
 export async function GET(
   request: NextRequest,
-  context?: { params?: { slug?: string } }
+  context: RouteContext
 ) {
-  const slug =
-    context?.params?.slug ?? request.nextUrl.searchParams.get("slug");
+  const params = await Promise.resolve(context.params);
+  const slug = params.slug ?? request.nextUrl.searchParams.get("slug");
   const org = request.nextUrl.searchParams.get("org") ?? "default";
 
   if (!slug) {
@@ -68,7 +77,9 @@ export async function GET(
   }
 
   const { user, role } = await getRequestAuth(request);
-  const entry = findEntryBySlug(slug, org);
+  const entry = isEntriesDbEnabled()
+    ? await findEntryBySlugDb(slug, org)
+    : findEntryBySlug(slug, org);
 
   if (!entry) {
     return notFound();
@@ -101,13 +112,13 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  context?: { params?: { slug?: string } }
+  context: RouteContext
 ) {
   const auth = await requireAuth(request, ["editor", "admin"]);
   if (auth.error) return auth.error;
 
-  const slug =
-    context?.params?.slug ?? request.nextUrl.searchParams.get("slug");
+  const params = await Promise.resolve(context.params);
+  const slug = params.slug ?? request.nextUrl.searchParams.get("slug");
 
   if (!slug) {
     return validationError("Slug is required", [
@@ -135,7 +146,9 @@ export async function PATCH(
 
   const ifMatch = request.headers.get("if-match");
 
-  const result = updateEntry(slug, auth.user?.org ?? "default", body.data, ifMatch);
+  const result = isEntriesDbEnabled()
+    ? await updateEntryDb(slug, auth.user?.org ?? "default", body.data, ifMatch)
+    : updateEntry(slug, auth.user?.org ?? "default", body.data, ifMatch);
 
   if (!result.ok) {
     if (result.error === "conflict") {
